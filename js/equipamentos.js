@@ -1,36 +1,47 @@
 import { supabase } from './supabase.js';
 
-let usuario = null;
+const $ = (id) => document.getElementById(id);
+
 let equipamentos = [];
+let usuarioLogado = null;
 
-async function iniciar() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    window.location.href = 'index.html';
-    return;
-  }
+/* ================= NAVEGAÇÃO ENTRE ABAS ================= */
+function trocarAba(nome) {
+  if (!nome) return;
 
-  const { data: perfil } = await supabase
-    .from('usuarios')
-    .select('nome, perfil')
-    .eq('id', session.user.id)
-    .single();
+  document.querySelectorAll('.aba').forEach((aba) => {
+    aba.classList.toggle('ativa', aba.id === 'aba-' + nome);
+  });
 
-  usuario = perfil;
-  document.getElementById('nome-usuario').textContent =
-    perfil ? `${perfil.nome} · ${perfil.perfil}` : '';
+  document.querySelectorAll('.menu-inferior button').forEach((b) => {
+    b.classList.toggle('ativo', b.dataset.aba === nome);
+  });
 
-  await carregarEquipamentos();
+  if (nome === 'equipamentos') carregarEquipamentos();
 }
 
+const nav = document.querySelector('.menu-inferior');
+if (nav) {
+  nav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-aba]');
+    if (btn) trocarAba(btn.dataset.aba);
+  });
+}
+
+/* ================= LISTAGEM ================= */
 async function carregarEquipamentos() {
+  const container = $('lista-equipamentos');
+  if (!container) return;
+
   const { data, error } = await supabase
     .from('equipamentos')
     .select('*')
     .order('criado_em', { ascending: false });
 
   if (error) {
-    console.error(error);
+    container.innerHTML = `Erro ao carregar: ${error.message}
+
+`;
     return;
   }
 
@@ -39,56 +50,98 @@ async function carregarEquipamentos() {
 }
 
 function renderizar(lista) {
-  const container = document.getElementById('lista-equipamentos');
+  const container = $('lista-equipamentos');
+  if (!container) return;
 
   if (!lista.length) {
-    container.innerHTML = 'Nenhum equipamento cadastrado ainda.
+    container.innerHTML =
+      'Nenhum equipamento cadastrado ainda.
 Toque no + para começar.
 
 ';
     return;
   }
 
-  container.innerHTML = lista.map(eq => `
-    
-      ${eq.foto_url
-        ? `<img class="item-foto" src="${eq.foto_url}" alt="">`
-        : `
+  container.innerHTML = lista.map((eq) => {
+    const status = (eq.status || 'disponivel').replace('_', ' ');
+    const meta = [eq.categoria, eq.marca].filter(Boolean).join(' · ');
+    const foto = eq.foto_url
+      ? `<img class="item-foto" src="${eq.foto_url}" alt="">`
+      : '
 
-`}
+';
+
+    return `
+      ${foto}
       
-        ${eq.nome}
+        ${eq.nome ?? ''}
 
 
-        ${eq.codigo}
+        ${eq.codigo ?? ''}
 
 
-        ${eq.categoria}${eq.marca ? ' · ' + eq.marca : ''}
+        ${meta}
 
 
       
 
 
-      ${eq.status.replace('_', ' ')}
+      ${status}
     
 
-
-  `).join('');
+`;
+  }).join('');
 }
 
-document.getElementById('busca').addEventListener('input', (e) => {
-  const termo = e.target.value.toLowerCase();
-  const filtrados = equipamentos.filter(eq =>
-    eq.nome.toLowerCase().includes(termo) ||
-    eq.codigo.toLowerCase().includes(termo)
-  );
-  renderizar(filtrados);
-});
+const busca = $('busca');
+if (busca) {
+  busca.addEventListener('input', (e) => {
+    const termo = e.target.value.toLowerCase().trim();
+    renderizar(
+      equipamentos.filter(
+        (eq) =>
+          (eq.nome || '').toLowerCase().includes(termo) ||
+          (eq.codigo || '').toLowerCase().includes(termo)
+      )
+    );
+  });
+}
 
+/* ================= MODAL ================= */
+const modal = $('modal-fundo');
+const form = $('form-equipamento');
+
+function abrirModal() {
+  if (!modal) return;
+  if (form) form.reset();
+  modal.classList.add('aberto');
+}
+
+function fecharModal() {
+  if (modal) modal.classList.remove('aberto');
+}
+
+const btnNovo = $('btn-novo');
+if (btnNovo) btnNovo.addEventListener('click', abrirModal);
+
+const btnCancelar = $('btn-cancelar');
+if (btnCancelar) btnCancelar.addEventListener('click', fecharModal);
+
+if (modal) {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) fecharModal();
+  });
+}
+
+/* ================= CÓDIGO AUTOMÁTICO ================= */
 async function gerarCodigo(categoria) {
   const prefixos = {
-    som: 'SOM', iluminacao: 'ILU', palco: 'PAL',
-    estrutura: 'EST', cabo: 'CAB', outro: 'OUT'
+    som: 'SOM',
+    iluminacao: 'ILU',
+    palco: 'PAL',
+    estrutura: 'EST',
+    cabo: 'CAB',
+    outro: 'OUT'
   };
   const prefixo = prefixos[categoria] || 'EQP';
 
@@ -97,71 +150,84 @@ async function gerarCodigo(categoria) {
     .select('*', { count: 'exact', head: true })
     .like('codigo', `RCA-${prefixo}-%`);
 
-  const numero = String((count || 0) + 1).padStart(4, '0');
-  return `RCA-${prefixo}-${numero}`;
+  return `RCA-${prefixo}-${String((count || 0) + 1).padStart(4, '0')}`;
 }
 
-const modal = document.getElementById('modal-fundo');
-const form = document.getElementById('form-equipamento');
+/* ================= SALVAR ================= */
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-document.getElementById('btn-novo').addEventListener('click', () => {
-  form.reset();
-  modal.classList.add('aberto');
-});
+    const btn = $('btn-salvar');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+    }
 
-document.getElementById('btn-cancelar').addEventListener('click', () => {
-  modal.classList.remove('aberto');
-});
+    const categoria = $('eq-categoria') ? $('eq-categoria').value : '';
+    const codigo = await gerarCodigo(categoria);
 
-modal.addEventListener('click', (e) => {
-  if (e.target === modal) modal.classList.remove('aberto');
-});
+    const { error } = await supabase.from('equipamentos').insert({
+      codigo,
+      nome: $('eq-nome') ? $('eq-nome').value.trim() : '',
+      categoria,
+      marca: $('eq-marca') ? $('eq-marca').value.trim() || null : null,
+      modelo: $('eq-modelo') ? $('eq-modelo').value.trim() || null : null,
+      numero_serie: $('eq-serie') ? $('eq-serie').value.trim() || null : null,
+      valor_locacao: $('eq-valor') ? parseFloat($('eq-valor').value) || null : null,
+      observacoes: $('eq-obs') ? $('eq-obs').value.trim() || null : null
+    });
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('btn-salvar');
-  btn.disabled = true;
-  btn.textContent = 'Salvando...';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Salvar';
+    }
 
-  const categoria = document.getElementById('eq-categoria').value;
-  const codigo = await gerarCodigo(categoria);
+    if (error) {
+      alert('Erro ao salvar: ' + error.message);
+      return;
+    }
 
-  const { error } = await supabase.from('equipamentos').insert({
-    codigo,
-    nome: document.getElementById('eq-nome').value.trim(),
-    categoria,
-    marca: document.getElementById('eq-marca').value.trim() || null,
-    modelo: document.getElementById('eq-modelo').value.trim() || null,
-    numero_serie: document.getElementById('eq-serie').value.trim() || null,
-    valor_locacao: parseFloat(document.getElementById('eq-valor').value) || null,
-    observacoes: document.getElementById('eq-obs').value.trim() || null
+    fecharModal();
+    if (form) form.reset();
+    await carregarEquipamentos();
   });
+}
 
-  btn.disabled = false;
-  btn.textContent = 'Salvar';
+/* ================= SAIR ================= */
+const btnSair = $('btn-sair');
+if (btnSair) {
+  btnSair.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = 'index.html';
+  });
+}
 
-  if (error) {
-    alert('Erro ao salvar: ' + error.message);
+/* ================= INICIAR ================= */
+async function iniciar() {
+  const { data } = await supabase.auth.getSession();
+
+  if (!data.session) {
+    window.location.href = 'index.html';
     return;
   }
 
-  modal.classList.remove('aberto');
-  form.reset();
+  const { data: perfil } = await supabase
+    .from('usuarios')
+    .select('nome, perfil')
+    .eq('id', data.session.user.id)
+    .maybeSingle();
+
+  usuarioLogado = perfil;
+
+  const nomeEl = $('nome-usuario');
+  if (nomeEl) {
+    nomeEl.textContent = perfil
+      ? `${perfil.nome} · ${perfil.perfil}`
+      : data.session.user.email;
+  }
+
   await carregarEquipamentos();
-});
-
-document.querySelectorAll('.menu-inferior button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.menu-inferior button').forEach(b => b.classList.remove('ativo'));
-    document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
-    btn.classList.add('ativo');
-    document.getElementById('aba-' + btn.dataset.aba).classList.add('ativa');
-  });
-});
-
-document.getElementById('btn-sair').addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  window.location.href = 'index.html';
-});
+}
 
 iniciar();
