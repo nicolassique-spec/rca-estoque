@@ -271,3 +271,30 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   .conteudo { padding: 24px; padding-bottom: 100px; }
   .menu-inferior { max-width: 900px; margin: 0 auto; border-radius: var(--raio) var(--raio) 0 0; }
 }
+
+/* ===== Ajustes de posição ===== */
+.conteudo {
+  padding-bottom: calc(150px + env(safe-area-inset-bottom));
+}
+
+.btn-flutuante {
+  bottom: calc(105px + env(safe-area-inset-bottom));
+}
+
+.menu-inferior button {
+  min-height: 62px;
+  padding: 10px 4px;
+}
+
+.modal {
+  padding-bottom: 8px;
+}
+
+.modal-acoes {
+  position: sticky;
+  bottom: 0;
+  background: var(--preto-card);
+  padding: 12px 0 calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--preto-borda);
+  margin-top: 18px;
+}
