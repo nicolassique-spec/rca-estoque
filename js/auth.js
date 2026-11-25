@@ -5,8 +5,12 @@ const btn = document.getElementById('btn-entrar');
 const msgErro = document.getElementById('msg-erro');
 
 function mostrarErro(texto) {
-  msgErro.textContent = texto;
-  msgErro.hidden = false;
+  if (msgErro) {
+    msgErro.textContent = texto;
+    msgErro.hidden = false;
+  } else {
+    alert(texto);
+  }
 }
 
 supabase.auth.getSession().then(({ data }) => {
@@ -15,28 +19,38 @@ supabase.auth.getSession().then(({ data }) => {
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  msgErro.hidden = true;
+
+  if (msgErro) msgErro.hidden = true;
+
   btn.disabled = true;
   btn.textContent = 'Entrando...';
 
   const email = document.getElementById('email').value.trim();
   const senha = document.getElementById('senha').value;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password: senha
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha
+    });
 
-  if (error) {
-    mostrarErro(
-      error.message === 'Invalid login credentials'
-        ? 'E-mail ou senha incorretos.'
-        : 'Não foi possível entrar. Tente novamente.'
-    );
+    if (error) {
+      mostrarErro(
+        error.message === 'Invalid login credentials'
+          ? 'E-mail ou senha incorretos.'
+          : error.message
+      );
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+      return;
+    }
+
+    if (data.session) {
+      window.location.href = 'app.html';
+    }
+  } catch (err) {
+    mostrarErro('Erro de conexão: ' + err.message);
     btn.disabled = false;
     btn.textContent = 'Entrar';
-    return;
   }
-
-  window.location.href = 'app.html';
 });
