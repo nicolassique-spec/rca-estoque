@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>RCA ESTOQUE</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    RCA ESTOQUE
 
+
+    
+      
+      <button class="btn-sair" id="btn-sair">Sair</button>
+    
+
+
+  </header>
+
+  <main class="conteudo">
+    
+      <input type="search" class="busca" id="busca" placeholder="Buscar por nome ou código...">
+      
+
+
+    
+
+
+
+    
+      Movimentações — próxima etapa
+
+
+    
+
+
+
+    
+      Solicitações — próxima etapa
+
+
+    
+
+
+
+    
+      Relatórios — próxima etapa
+
+
+    
+
+
+  </main>
+
+  <button class="btn-flutuante" id="btn-novo" title="Novo equipamento">+</button>
+
+  <nav class="menu-inferior">
+    <button class="ativo" data-aba="equipamentos">
+      📦 Equipamentos
+    </button>
+    <button data-aba="movimentacoes">
+      🔄 Movimentos
+    </button>
+    <button data-aba="solicitacoes">
+      📋 Solicitações
+    </button>
+    <button data-aba="relatorios">
+      📊 Relatórios
+    </button>
+  </nav>
+
+  
+    
+      <h2 id="modal-titulo">Novo equipamento</h2>
+      <form id="form-equipamento">
+        <label for="eq-nome">Nome</label>
+        <input type="text" id="eq-nome" required placeholder="Caixa de som ativa 15">
+
+        <label for="eq-categoria">Categoria</label>
+        <select id="eq-categoria" required>
+          <option value="">Selecione...</option>
+          <option value="som">Som</option>
+          <option value="iluminacao">Iluminação</option>
+          <option value="palco">Palco</option>
+          <option value="estrutura">Estrutura</option>
+          <option value="cabo">Cabos e conectores</option>
+          <option value="outro">Outro</option>
+        </select>
+
+        <label for="eq-marca">Marca</label>
+        <input type="text" id="eq-marca" placeholder="JBL">
+
+        <label for="eq-modelo">Modelo</label>
+        <input type="text" id="eq-modelo" placeholder="SRX815P">
+
+        <label for="eq-serie">Número de série</label>
+        <input type="text" id="eq-serie">
+
+        <label for="eq-valor">Valor de locação (R$)</label>
+        <input type="number" id="eq-valor" step="0.01" min="0" placeholder="0,00">
+
+        <label for="eq-obs">Observações</label>
+        <textarea id="eq-obs" rows="2"></textarea>
+
+        
+          <button type="button" class="btn-secundario" id="btn-cancelar">Cancelar</button>
+          <button type="submit" id="btn-salvar">Salvar</button>
+        
+
+
+      </form>
+    
+
+
+  
+
+
+
+  <script type="module" src="js/equipamentos.js"></script>
+</body>
+</html>
