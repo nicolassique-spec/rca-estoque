@@ -62,9 +62,9 @@ export default function LoginPage() {
             className="w-full rounded-lg border border-yellow-400/40 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-yellow-400"
           />
 
-          {erro && {erro}
+          {erro ? {erro}
 
-}
+ : null}
 
           <button
             type="submit"
