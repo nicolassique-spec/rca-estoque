@@ -8,12 +8,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
   async function entrar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErro('');
     setCarregando(true);
 
     const supabase = criarClienteNavegador();
@@ -23,7 +21,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setErro('E-mail ou senha inválidos.');
+      alert('E-mail ou senha inválidos.');
       setCarregando(false);
       return;
     }
@@ -61,10 +59,6 @@ export default function LoginPage() {
             autoComplete="current-password"
             className="w-full rounded-lg border border-yellow-400/40 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-yellow-400"
           />
-
-          {erro ? {erro}
-
- : null}
 
           <button
             type="submit"
